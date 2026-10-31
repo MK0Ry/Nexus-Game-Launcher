@@ -1,57 +1,102 @@
 # Nexus Game Launcher
 
-Nexus is a local-first Windows desktop app for organizing a personal PC game library and launching games from one place.
+Nexus is a local-first desktop app for organizing and launching PC games from
+one library. It is built with C++20, Qt 6 Widgets, CMake, and SQLite. Game
+entries, settings, and play-session history are stored locally; Nexus does not
+require an account or a network connection.
 
-## Run & Operate
+## Features
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
-- Windows desktop setup, build, tests, and packaging instructions: `apps/nexus-launcher/README.md`
-- Windows build: from `apps/nexus-launcher`, run `cmake --preset windows-msvc` then `cmake --build --preset windows-debug`
-- Desktop tests: `ctest --preset windows-debug` from `apps/nexus-launcher`
+- Add and edit games manually, including executable path, launch arguments,
+  working directory, cover image, tags, genre, category, collection, and
+  franchise.
+- Search and filter the library, then sort games or switch between grid and
+  list views.
+- Mark favorites, track playtime and launch counts, and view recent sessions.
+- Launch games directly, focus or stop a process launched by Nexus, and avoid
+  starting the same library entry twice from Nexus.
+- Import and export the library as JSON.
+- Customize the theme, accent color, layout density, and default library view.
 
-## Stack
+Removing a game from Nexus removes only its library entry. It does not uninstall
+or delete the game's files or saved data.
 
-- Windows desktop app: C++20, Qt 6 Widgets, CMake, SQLite via Qt SQL
-- pnpm workspaces, Node.js 24, TypeScript 5.9 (workspace template services)
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+## Run on Windows
 
-## Where things live
+The Windows presets target Windows 10/11, 64-bit.
 
-- `apps/nexus-launcher/` — standalone Windows desktop app source, CMake project, tests, and build guide
-- `apps/nexus-launcher/src/ui/` — main window and game entry dialog
-- `apps/nexus-launcher/src/data/` — SQLite schema and game repository
-- `apps/nexus-launcher/src/launcher/` — safe direct-process launching and play-session tracking
-- `apps/nexus-launcher/src/app/` — JSON settings persistence
+### Requirements
 
-## Architecture decisions
+1. **Visual Studio 2022** with the **Desktop development with C++** workload and
+   the Windows 10/11 SDK.
+2. **CMake 3.25 or newer**.
+3. **Qt 6.6 or newer**, installed with the **MSVC 2022 64-bit** kit. Include Qt
+   Widgets and the Qt SQL SQLite driver.
 
-- The desktop app does not depend on the workspace API or an account; its library and settings are local.
-- Game executables are started with `QProcess` arguments, never through a shell.
-- Removing a game removes its Nexus record only, not files from the installation folder.
-- Nexus leaves running games open when it exits; playtime tracking ends when the launcher closes.
+### Build and launch
 
-## Product
+1. Clone or download this repository and open **Developer PowerShell for VS
+   2022**.
+2. Change to the app's source directory:
 
-The initial milestone provides persistent appearance settings, manual library management with filters and JSON import/export, favorites, and direct game launching with process status and playtime history. Metadata providers, launcher-client detection, folder scanning, and performance monitoring remain future stages.
+   ```powershell
+   cd path\to\Nexus-Game-Launcher\apps\nexus-launcher
+   ```
 
-## User preferences
+3. Set `QT_ROOT` to the installed Qt kit directory. Update the example to match
+   your Qt version and installation location:
 
-The initial delivery should follow the attached Project Nexus brief and implement stages 1–3 before the remaining stages.
+   ```powershell
+   $env:QT_ROOT = "C:\Qt\6.8.3\msvc2022_64"
+   Test-Path "$env:QT_ROOT\lib\cmake\Qt6"
+   ```
 
-## Gotchas
+   The `Test-Path` command should return `True`.
 
-- The Qt desktop app is a native Windows project and does not run in the browser preview.
-- Use `apps/nexus-launcher/README.md` as the source of truth for Qt/MSVC dependency setup and packaging.
+4. Configure, compile, and run the tests:
 
-## Pointers
+   ```powershell
+   cmake --preset windows-msvc
+   cmake --build --preset windows-debug
+   ctest --preset windows-debug
+   ```
 
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+5. Start Nexus:
+
+   ```powershell
+   .\build\windows-msvc\Debug\nexus-launcher.exe
+   ```
+
+### Create a packaged Release build
+
+To prepare a Release folder with Qt runtime dependencies:
+
+```powershell
+cmake --preset windows-msvc-release
+cmake --build --preset windows-release
+cmake --install build/windows-msvc-release --config Release
+& "$env:QT_ROOT\bin\windeployqt.exe" --release .\dist\bin\nexus-launcher.exe
+& .\dist\bin\nexus-launcher.exe
+```
+
+The raw executable may need Qt runtime libraries and plugins beside it. Use
+`windeployqt` before distributing the Release folder.
+
+## Local data
+
+- Game library and launch history: `%LOCALAPPDATA%\NexusGameLauncher\nexus.sqlite3`
+- Settings: `%APPDATA%\NexusGameLauncher\nexus-settings.json`
+
+Nexus leaves games running when the launcher closes. Playtime tracking for an
+active session ends when Nexus exits.
+
+## Project layout
+
+- `apps/nexus-launcher/src/ui/` — Qt interface
+- `apps/nexus-launcher/src/data/` — SQLite database and library repository
+- `apps/nexus-launcher/src/launcher/` — process launching and session tracking
+- `apps/nexus-launcher/src/app/` — persistent settings
+- `apps/nexus-launcher/tests/` — Qt Test suite
+
+See [`apps/nexus-launcher/README.md`](apps/nexus-launcher/README.md) for
+architecture details and project boundaries.
