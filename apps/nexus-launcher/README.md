@@ -30,7 +30,7 @@ and migrated automatically on first launch. Schema version is kept in
 
 1. Install **Visual Studio 2022** with the *Desktop development with C++*
    workload and the Windows 10/11 SDK.
-2. Install **CMake 3.24 or newer**. The Visual Studio 2022 installer can supply
+2. Install **CMake 3.25 or newer**. The Visual Studio 2022 installer can supply
    CMake and MSBuild; Ninja is optional because the preset uses the Visual Studio
    generator.
 3. Install **Qt 6.6 or newer** with the **MSVC 2022 64-bit** kit. In the Qt
