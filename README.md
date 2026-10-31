@@ -1,66 +1,57 @@
 # Nexus Game Launcher
 
-A lightweight, native Windows game launcher built with **C++**, **Qt 6**, and **SQLite**.
+Nexus is a local-first Windows desktop app for organizing a personal PC game library and launching games from one place.
 
-Nexus aims to provide a clean desktop experience for organizing and launching your games from one place.
+## Run & Operate
 
-## Features
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm run typecheck` — full typecheck across all packages
+- `pnpm run build` — typecheck + build all packages
+- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
+- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
+- Required env: `DATABASE_URL` — Postgres connection string
+- Windows desktop setup, build, tests, and packaging instructions: `apps/nexus-launcher/README.md`
+- Windows build: from `apps/nexus-launcher`, run `cmake --preset windows-msvc` then `cmake --build --preset windows-debug`
+- Desktop tests: `ctest --preset windows-debug` from `apps/nexus-launcher`
 
-- 🎮 Game library management
-- 🚀 Launch games directly from the application
-- 💾 Local data storage with SQLite
-- 🖥️ Native Windows desktop interface
-- ⚡ Built with C++ and Qt 6
-- 📦 Portable Windows deployment
+## Stack
 
-## Tech Stack
+- Windows desktop app: C++20, Qt 6 Widgets, CMake, SQLite via Qt SQL
+- pnpm workspaces, Node.js 24, TypeScript 5.9 (workspace template services)
+- API: Express 5
+- DB: PostgreSQL + Drizzle ORM
+- Validation: Zod (`zod/v4`), `drizzle-zod`
+- API codegen: Orval (from OpenAPI spec)
+- Build: esbuild (CJS bundle)
 
-- **Language:** C++
-- **UI Framework:** Qt 6
-- **Database:** SQLite
-- **Build System:** CMake
-- **Compiler:** MSVC 2022 (v143)
+## Where things live
 
-## Requirements
+- `apps/nexus-launcher/` — standalone Windows desktop app source, CMake project, tests, and build guide
+- `apps/nexus-launcher/src/ui/` — main window and game entry dialog
+- `apps/nexus-launcher/src/data/` — SQLite schema and game repository
+- `apps/nexus-launcher/src/launcher/` — safe direct-process launching and play-session tracking
+- `apps/nexus-launcher/src/app/` — JSON settings persistence
 
-For development:
+## Architecture decisions
 
-- Windows 10 or Windows 11
-- Visual Studio 2022 with Desktop development with C++
-- MSVC v143 build tools
-- Windows SDK
-- Qt 6.6 or newer with the MSVC 2022 64-bit kit
-- CMake
+- The desktop app does not depend on the workspace API or an account; its library and settings are local.
+- Game executables are started with `QProcess` arguments, never through a shell.
+- Removing a game removes its Nexus record only, not files from the installation folder.
+- Nexus leaves running games open when it exits; playtime tracking ends when the launcher closes.
 
-## Build from Source
+## Product
 
-Clone the repository:
+The initial milestone provides persistent appearance settings, manual library management with filters and JSON import/export, favorites, and direct game launching with process status and playtime history. Metadata providers, launcher-client detection, folder scanning, and performance monitoring remain future stages.
 
-```bash
-git clone https://github.com/MK0Ry/Nexus-Game-Launcher.git
-cd Nexus-Game-Launcher/apps/nexus-Launcher
-```
+## User preferences
 
-Configure and build:
+The initial delivery should follow the attached Project Nexus brief and implement stages 1–3 before the remaining stages.
 
-```powershell
-$env:QT_ROOT = "C:\Qt\6.12.0\msvc2022_64"
-$env:CMAKE_PREFIX_PATH = $env:QT_ROOT
+## Gotchas
 
-cmake --preset windows-msvc
-cmake --build --preset windows-debug --config Release
-```
+- The Qt desktop app is a native Windows project and does not run in the browser preview.
+- Use `apps/nexus-launcher/README.md` as the source of truth for Qt/MSVC dependency setup and packaging.
 
-See the CMake presets and project documentation for the exact build configuration.
+## Pointers
 
-## Download
-
-Prebuilt Windows releases will be published on the [Releases](../../releases) page when available.
-
-## Contributing
-
-Contributions, bug reports, and feature suggestions are welcome. Open an issue to report a problem or suggest an improvement.
-
-## License
-
-See the `LICENSE` file for licensing terms.
+- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
